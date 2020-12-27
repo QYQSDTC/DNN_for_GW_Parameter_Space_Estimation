@@ -1,0 +1,5 @@
+.DS_Store
+Data/
+Noise/
+*.csv
+*.code-workplace
