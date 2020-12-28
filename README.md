@@ -1,7 +1,9 @@
-# DNN_for_GW_Parameter_Space_Estimation
+# DNN for GW Hyperarameter Estimation
 Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank
 
 # Reference
+
+'''
 @article{PhysRevD.97.044039,
   title = {Deep neural networks to enable real-time multimessenger astrophysics},
   author = {George, Daniel and Huerta, E. A.},
@@ -16,3 +18,4 @@ Using Depp Learning method to estimate GW parameter space by training DNN with a
   doi = {10.1103/PhysRevD.97.044039},
   url = {https://link.aps.org/doi/10.1103/PhysRevD.97.044039}
 }
+'''
