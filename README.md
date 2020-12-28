@@ -1,5 +1,7 @@
 # DNN for GW Hyperarameter Estimation
-Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank
+Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank.
+
+Trying to reproduce the job done in reference.
 
 # Reference
 
