@@ -39,7 +39,36 @@ def main():
     np.random.seed(115719)  # for reproducibility
     data = []  # store generated waveforms
 
-    N = 3000  # number of waveforms
+    '''
+    obtain LISA/Tian Qin noise time series from known PSD
+    '''
+    df = 1 / YearInS
+    fmin = 1e-5
+    fmax = 6e-4
+    f = np.arange(fmin, fmax, df)
+    # fs = (fmax - fmin)/df
+    # print(f'sampling frequency is {fs} Hz')
+
+    ################
+    # PSD = TQPSD(f)
+    PSD = LISAPSD(f)
+    ################
+
+    TimeSeries, TimeVector = psd2timeseries(PSD, fmax)
+    # TimeVector = psd2timeseries(PSD, fmax)[1]
+    Noise_t = TimeSeries[1:len(f)]
+
+    fig = plt.figure(figsize=(5, 3.5), dpi=100)
+    ax = fig.add_axes([0, 0, 1, 0.5])
+    ax.plot(TimeVector, Noise_t)
+    ax.set_title("Noise time series n(t)")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Noise n(t)")
+    fig.savefig("Noise.png",
+                dpi=350,
+                bbox_inches="tight")
+
+    N = 3000  # number of waveform templates
     for i in range(0, N):
         Tc = float(np.random.rand(1) * YearInS)  # chirp time
         Phic = 0.954  # chirp phase
@@ -53,7 +82,7 @@ def main():
         Psi = float(np.random.uniform(0, 2 * np.pi))
         # print(f"ThetaS is {ThetaS}, PhiS is {PhiS}, Iota is {Iota}, Psi is {Psi}")
 
-        Z = 1.0  # cosmological redshift
+        Z = 10 * np.random.rand(1) # choose sources within z < 10 #1.0  # cosmological redshift
         M1sun = 1e7  # solar mass as unit
         M2sun = 1e6  # solar mass as unit
         Tobs = 0.5  # year as unit
@@ -64,40 +93,15 @@ def main():
         M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
         M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
         M = M1 + M2  # total mass
-        Qmr = M1 / M2  # mass ratio
+        # Qmr = M1 / M2  # mass ratio
         Mu = M1 * M2 / M  # reduced mass
         Mc = Mu**(3.0 / 5) * M**(2.0 / 5)  # chirp mass
         Eta = M1 * M2 / M**2  # symmetric mass ratio
-        """
-            H1 data simulation
-        """
-        df = 1 / YearInS
-        fmin = 1e-5
-        fmax = 6e-4
-        f = np.arange(fmin, fmax, df)
-        # fs = (fmax - fmin)/df
-        # print(f'sampling frequency is {fs} Hz')
 
-        ################
-        # PSD = TQPSD(f)
-        PSD = LISAPSD(f)
-        ################
-
-        TimeSeries = psd2timeseries(PSD, fmax)[0]
-        TimeVector = psd2timeseries(PSD, fmax)[1]
-        Noise_t = TimeSeries[1:len(f)]
-
-        fig = plt.figure(figsize=(5, 3.5), dpi=100)
-        ax = fig.add_axes([0, 0, 1, 0.5])
-        ax.plot(TimeVector, Noise_t)
-        ax.set_title("Noise time series n(t)")
-        ax.set_xlabel("Time [s]")
-        ax.set_ylabel("Noise n(t)")
-        fig.savefig("./Noise/Noise" + str(i) + ".png",
-                    dpi=350,
-                    bbox_inches="tight")
-
-        # h1 data
+        '''
+        signal simulation
+        '''
+        # parameter setup
         tc_true = Tc
         phic_true = Phic
         mc_true = Mc
@@ -134,7 +138,9 @@ def main():
             iota_true,
             psi_true,
         )
-
+        #TODO: add data whitening process
+        #TODO: add random gaussian noise
+        
         # save Data into pandas dataframe
         Data = h_t + Noise_t
         wave_length = len(Data)
