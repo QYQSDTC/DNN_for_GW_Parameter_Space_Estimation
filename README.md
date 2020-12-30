@@ -7,8 +7,8 @@ Trying to extend the job done in reference.
 1. Generate pure LISA signals as templates(~ 3000) 
 2. obtain real noise time series from LISA noise PSD(Power Spectral Density)
 3. Whiten our data using LISA PSD before add multiple realizations of :
-  1. White Gaussian Noise
-  2. Real LISA Noise
+    1. White Gaussian Noise
+    2. Real LISA Noise
 4. Shift signal peak to left at some random time
 5. Add multiple noise realizations to shifted(whitened(signal))
 
