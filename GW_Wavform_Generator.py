@@ -38,7 +38,6 @@ def main():
 
     np.random.seed(115719)  # for reproducibility
     data = []  # store generated waveforms
-
     '''
     obtain LISA/Tian Qin noise time series from known PSD
     '''
@@ -64,9 +63,7 @@ def main():
     ax.set_title("Noise time series n(t)")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Noise n(t)")
-    fig.savefig("Noise.png",
-                dpi=350,
-                bbox_inches="tight")
+    fig.savefig("Noise.png", dpi=350, bbox_inches="tight")
 
     N = 3000  # number of waveform templates
     for i in range(0, N):
@@ -82,7 +79,8 @@ def main():
         Psi = float(np.random.uniform(0, 2 * np.pi))
         # print(f"ThetaS is {ThetaS}, PhiS is {PhiS}, Iota is {Iota}, Psi is {Psi}")
 
-        Z = 10 * np.random.rand(1) # choose sources within z < 10 #1.0  # cosmological redshift
+        Z = 10 * np.random.rand(
+            1)  # choose sources within z < 10 #1.0  # cosmological redshift
         M1sun = 1e7  # solar mass as unit
         M2sun = 1e6  # solar mass as unit
         Tobs = 0.5  # year as unit
@@ -97,7 +95,6 @@ def main():
         Mu = M1 * M2 / M  # reduced mass
         Mc = Mu**(3.0 / 5) * M**(2.0 / 5)  # chirp mass
         Eta = M1 * M2 / M**2  # symmetric mass ratio
-
         '''
         signal simulation
         '''
@@ -138,11 +135,13 @@ def main():
             iota_true,
             psi_true,
         )
+
         #TODO: add data whitening process
-        #TODO: add random gaussian noise
-        
+
+        Noise_gaus = np.random.randn((1, len(h_t)))
+
         # save Data into pandas dataframe
-        Data = h_t + Noise_t
+        Data = h_t + Noise_gaus
         wave_length = len(Data)
         waveform = np.concatenate((Data, para))
         data.append(waveform)
