@@ -1,10 +1,10 @@
 # DNN for GW Hyperarameter Estimation
 Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank.
 
-Trying to extend the job done in reference.
+Trying to extend the job done in **Reference** to hyperparameter space.
 
 ## Data Preparation
-1. Generate pure LISA signals as templates(~ 3000) 
+1. Generate SMBHB GW signals as templates(~ 3000) 
 2. obtain real noise time series from LISA noise PSD(Power Spectral Density)
 3. Whiten our data using LISA PSD before add multiple realizations of :
     1. White Gaussian Noise
