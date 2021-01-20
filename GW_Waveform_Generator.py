@@ -1,13 +1,36 @@
-"""
+'''
+
+　　┏┓　　　┏┓+ +
+　┏┛┻━━━┛┻┓ + +
+　┃　　　　　　　┃ 　
+　┃　　　━　　　┃ ++ + + +
+ ████━████ ┃+
+　┃　　　　　　　┃ +
+　┃　　　┻　　　┃
+　┃　　　　　　　┃ + +
+　┗━┓　　　┏━┛
+　　　┃　　　┃　　　　　　　　　　　
+　　　┃　　　┃ + + + +
+　　　┃　　　┃
+　　　┃　　　┃ +  神兽保佑
+　　　┃　　　┃    代码无bug　　
+　　　┃　　　┃　　+　　　　　　　　　
+　　　┃　 　　┗━━━┓ + +
+　　　┃ 　　　　　　　┣┓
+　　　┃ 　　　　　　　┏┛
+　　　┗┓┓┏━┳┓┏┛ + + + +
+　　　　┃┫┫　┃┫┫
+　　　　┗┻┛　┗┻┛+ + + +
+
+
 Author: Yiqian Qian
-Description: generate GW waveforms used in TianQin/LISA. Code adopted from Wenfan Feng.
+Description: file content
 Date: 2020-12-25 16:45:55
 LastEditors: Yiqian Qian
-LastEditTime: 2020-12-25 21:45:29
-FilePath: /DNN for GW High Dimension Parameter Estimation/GW_Wavform_Generator.py
-"""
+LastEditTime: 2021-01-21 00:01:55
+FilePath: /undefined/Users/qyq/Research/DNN_for_GW_Parameter_Space_Estimation/GW_Waveform_Generator.py
+'''
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from functools import partial
