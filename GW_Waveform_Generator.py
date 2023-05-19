@@ -106,18 +106,18 @@ def main():
         Z = 10 * np.random.rand(
             1
         )  # choose sources within z < 10 #1.0  # cosmological redshift
-        # M1sun = 1e7  # solar mass as unit
-        # M2sun = 1e6  # solar mass as unit
+        M1sun = 1e7  # solar mass as unit
+        M2sun = 1e6  # solar mass as unit
         Tobs = 0.5  # year as unit
         # Chi1   = 0.1    # dimensionless parameter
         # Chi2   = 0.0    # dimensionless parameter
         cosmo = FlatLambdaCDM(H0=67, Om0=0.32)
         DL = cosmo.luminosity_distance(Z).value * MpcInS  # Mpc in second
-        # M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
-        # M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
-        # M = M1 + M2  # total mass
-        # Qmr = M1 / M2  # mass ratio
-        # Mu = M1 * M2 / M  # reduced mass
+        M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
+        M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
+        M = M1 + M2  # total mass
+        Qmr = M1 / M2  # mass ratio
+        Mu = M1 * M2 / M  # reduced mass
         # TODO: 1. choose Mc randomly in some range. 2. choose Eta randomly in some range.
         Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
         Eta = M1 * M2 / M ** 2  # symmetric mass ratio
