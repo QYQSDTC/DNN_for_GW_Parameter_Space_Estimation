@@ -1,3 +1,11 @@
+<!--
+ * @Author: Yiqian Qian
+ * @Description: file content
+ * @Date: 2023-09-15 11:13:11
+ * @LastEditors: Yiqian Qian
+ * @LastEditTime: 2023-09-15 11:38:44
+ * @FilePath: /DNN_for_GW_Parameter_Space_Estimation/README.md
+-->
 # DNN for GW Hyperarameter Estimation
 
 Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank.
@@ -44,7 +52,7 @@ This script can quickly generate GW waveforms for LISA and TianQin using known n
 
 - DL: distance from the source, calculated according to the specific cosmology model and redshift **Z**.
 
-- M1sun: the mass of the primary blackhole, in the unit of solar mass, M1sun > M2sun.
+- M1sun: the mass of the primary blackhole, in the unit of solar mass, M1sun > M2sun. $10^6 M_\odot$ < M1sun < $10^9 M_\odot$.
 
 - M2sun: the mass of the minor blackhole.
 
