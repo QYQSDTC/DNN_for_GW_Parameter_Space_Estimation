@@ -1,5 +1,5 @@
+#!/Users/qyq/miniconda3/envs/psr/bin/python
 """
-
 　　┏┓　　　┏┓+ +
 　┏┛┻━━━┛┻┓ + +
 　┃　　　　　　　┃ 　
@@ -41,8 +41,6 @@ from astropy import constants as const
 from astropy.cosmology import FlatLambdaCDM
 import time
 
-start_time = time.time()
-
 
 def main():
     """
@@ -50,13 +48,13 @@ def main():
     Constants set up
     mutable paramters: Phic, ThetaS, Phis, Iota, Psi, M1, M2
     """
-    global MsunInS, MpcInS, OrbitPeriodInS, OrbitRadiusInS, MearthInS, YearInS, AUInS, Tc, Phic, ThetaS, Phis, Iota, Psi, Z, M1sun, M2sun, Tobs, DL, Mc, Eta
+    global MsunInS, MpcInS, OrbitPeriodInS, OrbitRadiusInS, MearthInS, YearInS, AUInS, Tc, Phic, ThetaS, Phis, Iota, Psi, Z, M1sun, M2sun, DL, Mc, Eta
 
     MsunInS = 4.926860879228572e-06  # solar mass in [s]
     MpcInS = 102927125053532.6  # mega parsec in [s]
     OrbitRadiusInS = 1e8 / const.c.value  # 1e5 km
-    MearthInS = const.M_earth.value * const.G.value / const.c.value ** 3
-    OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS ** 3 / MearthInS)
+    MearthInS = const.M_earth.value * const.G.value / const.c.value**3
+    OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS**3 / MearthInS)
     YearInS = 31536000.0  # one year in [s]
     AUInS = const.au.value / const.c.value  # AU in [s]
 
@@ -65,50 +63,73 @@ def main():
     """
     obtain LISA/Tian Qin noise time series from known PSD
     """
-    df = 1 / YearInS
-    fmin = 1e-5
-    fmax = 6e-4
-    f = np.arange(fmin, fmax, df)
-    # fs = (fmax - fmin)/df
-    # print(f'sampling frequency is {fs} Hz')
+    T = 0.45 * YearInS + 10  # Total observation time
+    fs = 0.1  # sampling frequency
+    df = 1 / T  # frequency resolution
+    fmin = df
+    fmax = fs / 2
+    N = int(T * fs)  # number of samples
+    Nf = int((N - np.mod(N, 2)) / 2)  # number of frequency bins
+    f = np.linspace(fmin, fmax, Nf)
+    t = np.linspace(0, T, N)
 
     ################
     # PSD = TQPSD(f)
     PSD = LISAPSD(f)
     ################
 
-    TimeSeries, TimeVector = psd2timeseries(PSD, fmax)
-    # TimeVector = psd2timeseries(PSD, fmax)[1]
-    Noise_t = TimeSeries[1 : len(f)]
+    Nt = 10  # number of waveform templates
+    for i in range(0, Nt):
+        # generate noise time series according to certain PSD
+        # TimeSeries, TimeVector = psd2timeseries(PSD, fmax)
+        # Noise_t = TimeSeries
+        noise = psd2noise(T, fs, N, Nf, PSD)
+        # Calculate the PSD
+        # freq, Pxx = signal.welch(noise, fs, nperseg=int(N / 3))
+        freq, Pxx = signal.periodogram(noise, fs)
+        fft_noise = 2 * np.abs(np.fft.fft(noise) / fs) ** 2 / T
 
-    fig = plt.figure(figsize=(5, 3.5), dpi=100)
-    ax = fig.add_axes([0, 0, 1, 0.5])
-    ax.plot(TimeVector, Noise_t)
-    ax.set_title("Noise time series n(t)")
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Noise n(t)")
-    fig.savefig("Noise.png", dpi=350, bbox_inches="tight")
+        fig, axs = plt.subplots(3, 1, figsize=(5, 10))
+        # ax.plot(TimeVector, Noise_t)
+        axs[0].plot(t, noise)
+        axs[0].set_title("Noise time series n(t)")
+        axs[0].set_xlabel("Time [s]")
+        axs[0].set_ylabel("Noise n(t)")
+        # plot simulated PSD vs. designed PSD
+        axs[1].loglog(f, np.sqrt(fft_noise[1 : Nf + 1]), label="FFT PSD")
+        axs[1].loglog(f, np.sqrt(PSD), label="Designed PSD")
+        axs[1].set_title("PSD")
+        axs[1].set_xlabel("Frequency [Hz]")
+        axs[1].set_ylabel("$\sqrt{\mathrm{PSD}}$ [Hz$^{-1/2}$]")
+        axs[1].legend()
+        # plot periodogram PSD vs. designed PSD
+        axs[2].loglog(freq[1:Nf], np.sqrt(Pxx[1:Nf]), label="Periodogram PSD")
+        axs[2].loglog(f, np.sqrt(PSD), label="Designed PSD")
+        axs[2].set_title("PSD")
+        axs[2].set_xlabel("Frequency [Hz]")
+        axs[2].set_ylabel("$\sqrt{\mathrm{PSD}}$ [Hz$^{-1/2}$]")
+        axs[2].legend()
+        fig.tight_layout()
+        fig.savefig("./Data/Noise" + str(i) + ".png", dpi=350)
 
-    N = 3000  # number of waveform templates
-    for i in range(0, N):
-        Tc = float(np.random.rand(1) * YearInS)  # chirp time
+        # setup source parameters
+        Tc = np.random.rand(1)[0] * YearInS  # chirp time
         Phic = 0.954  # chirp phase
         # ThetaS = 1.325
         # PhiS = 2.04
         # Iota = 1.02
         # Psi = 0.658
-        ThetaS = float(np.arccos(np.random.uniform(-1, 1)))
-        PhiS = float(np.random.uniform(0, 2 * np.pi))
-        Iota = float(np.arccos(np.random.uniform(-1, 1)))
-        Psi = float(np.random.uniform(0, 2 * np.pi))
+        ThetaS = np.arccos(np.random.uniform(-1, 1))
+        PhiS = np.random.uniform(0, 2 * np.pi)
+        Iota = np.arccos(np.random.uniform(-1, 1))
+        Psi = np.random.uniform(0, 2 * np.pi)
         # print(f"ThetaS is {ThetaS}, PhiS is {PhiS}, Iota is {Iota}, Psi is {Psi}")
 
-        Z = 10 * np.random.rand(
-            1
+        Z = (
+            10 * np.random.rand(1)[0]
         )  # choose sources within z < 10 #1.0  # cosmological redshift
         M1sun = 1e7  # solar mass as unit
         M2sun = 1e6  # solar mass as unit
-        Tobs = 0.5  # year as unit
         # Chi1   = 0.1    # dimensionless parameter
         # Chi2   = 0.0    # dimensionless parameter
         cosmo = FlatLambdaCDM(H0=67, Om0=0.32)
@@ -120,7 +141,7 @@ def main():
         Mu = M1 * M2 / M  # reduced mass
         # TODO: 1. choose Mc randomly in some range. 2. choose Eta randomly in some range.
         Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
-        Eta = M1 * M2 / M ** 2  # symmetric mass ratio
+        Eta = M1 * M2 / M**2  # symmetric mass ratio
         """
         signal simulation
         """
@@ -152,7 +173,8 @@ def main():
         # print("Observation time: %f year" % Tobs)
         # print("Sampling time interval: %f second" % (TimeVector[2] - TimeVector[1]))
         h_t = ht_model(
-            TimeVector,
+            # TimeVector,
+            t,
             tc_true,
             phic_true,
             mc_true,
@@ -164,27 +186,32 @@ def main():
             psi_true,
         )
 
-        # TODO: add data whitening process
         # TODO: make white gaussian noise in scale
-        Noise_gaus = np.random.randn((1, len(h_t)))
+        Noise_gaus = np.random.randn(1, len(h_t))
 
         # save Data into pandas dataframe
-        Data = h_t + Noise_gaus
-        # Data = h_t + Noise_t # add real noise using LISA PSD
+        # Data = h_t + Noise_gaus
+        Data = h_t + noise
         wave_length = len(Data)
         waveform = np.concatenate((Data, para))
         data.append(waveform)
 
+        # Whiten data
+        Data_white = whiten_data(Data, PSD, fs)
+        # TODO: Calculate SNR
+
         fig, ax = plt.subplots(2, 1, figsize=(5, 5))
-        ax[0].plot(TimeVector, h_t, color="r")
+        ax[0].plot(t, h_t, color="r")
         ax[0].set_title("Signal model")
         ax[0].set_xlabel("Time [s]")
         ax[0].set_ylabel("Signal h(t)")
-        ax[1].plot(TimeVector, Data, color="y")
-        ax[1].plot(TimeVector, h_t, color="r")
+        ax[1].plot(t, Data, color="y", label="Data")
+        ax[1].plot(t, h_t, color="r", label="Signal")
+        ax[1].plot(t, Data_white, color="b", label="Whitened Data")
         ax[1].set_title("Data model")
         ax[1].set_xlabel("Time [s]")
         ax[1].set_ylabel("Data d(t)")
+        ax[1].legend()
         fig.tight_layout()
         fig.savefig("./Data/Data_Model" + str(i) + ".png", dpi=350, bbox_inches="tight")
 
@@ -203,7 +230,7 @@ def main():
     new_columns = {key: value for key, value in zip(columns_str, para_names)}
     df.rename(columns=new_columns)
     # print(f'New columns is {new_columns}')
-    df.to_csv(r"./waveforms.csv", index=False)
+    df.to_csv("./Data/waveforms.csv", index=False)
     return 0
 
 
@@ -283,7 +310,7 @@ def ht_respon_TQ(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
         1
         + (3715.0 / 8064 + 55.0 / 96 * eta) * THETA ** (-1.0 / 4)
         - 3 * np.pi / 4 * THETA ** (-3.0 / 8)
-        + (9275495.0 / 14450688 + 284875.0 / 258048 * eta + 1855.0 / 2048 * eta ** 2)
+        + (9275495.0 / 14450688 + 284875.0 / 258048 * eta + 1855.0 / 2048 * eta**2)
         * THETA ** (-1.0 / 2)
     )
 
@@ -357,7 +384,7 @@ def ht_respon_LISA(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
         1
         + (3715.0 / 8064 + 55.0 / 96 * eta) * THETA ** (-1.0 / 4)
         - 3 * np.pi / 4 * THETA ** (-3.0 / 8)
-        + (9275495.0 / 14450688 + 284875.0 / 258048 * eta + 1855.0 / 2048 * eta ** 2)
+        + (9275495.0 / 14450688 + 284875.0 / 258048 * eta + 1855.0 / 2048 * eta**2)
         * THETA ** (-1.0 / 2)
     )
 
@@ -411,7 +438,7 @@ def TQPSD(f):
     Sx = 1e-24
     Sa = 1e-30
     L0 = np.sqrt(3.0) * 1e5 * 1e3
-    return Sx / (L0 ** 2) + 4 * Sa / ((2 * np.pi * f) ** 4 * L0 ** 2) * (1.0 + 1e-4 / f)
+    return Sx / (L0**2) + 4 * Sa / ((2 * np.pi * f) ** 4 * L0**2) * (1.0 + 1e-4 / f)
 
 
 def LISAPSD(f):
@@ -419,18 +446,19 @@ def LISAPSD(f):
     Spos = 4e-22
     Sacc = 9e-30
     L = 5e9
-    return (4 * Spos + 16 * Sacc / (2 * np.pi * f) ** 4) / (4 * L ** 2)
+    return (4 * Spos + 16 * Sacc / (2 * np.pi * f) ** 4) / (4 * L**2)
 
 
 # ref：https://groups.google.com/g/comp.soft-sys.matlab/c/tmw2H26MDtI
 
 
+### ref：https://groups.google.com/g/comp.soft-sys.matlab/c/tmw2H26MDtI
 def psd2timeseries(PSD, fmax):
     """
     x = time series
     t = time vector
     PSD = power spectral density (one-sided, from 0 to fNyq)
-    fmax if fmax < fNyquist
+    fmax = max frequecy can reach if fmax < Nyquist frequency
     """
 
     N = len(PSD)
@@ -447,12 +475,13 @@ def psd2timeseries(PSD, fmax):
 
     # Compute complex spectrum
     Spectrum = SpectrumAmplitude * np.exp(1j * SpectrumPhase)
+    Spectrum_n = np.conj(
+        Spectrum[1:][::-1]
+    )  # reverse and conjugate and exclude the DC part
 
     # Generate the two-sided PSD:
-    end = len(Spectrum)
-    Spectrum_TwoSided = np.concatenate(
-        [Spectrum[0:end:1], np.conj(Spectrum[end - 2 : 0 : -1])]
-    )
+    Spectrum_TwoSided = np.concatenate([Spectrum, Spectrum_n])
+    # print(f'length of PSD {len(PSD)}\n length of Spectrum {len(Spectrum)}\n length of Spectrum_TwoSided {len(Spectrum_TwoSided)}')
 
     # Compute inverse FFT
     x = ifft(Spectrum_TwoSided)
@@ -461,11 +490,56 @@ def psd2timeseries(PSD, fmax):
 
     # Compute time vector
     delta_t = 1.0 / (2.0 * fmax)
-    t = np.arange(0, (N - 1) * delta_t, delta_t)
+    t = np.arange(0, (N * 2 - 1) * delta_t, delta_t)
 
     return [x, t]
 
 
+def psd2noise(T, fs, N, Nf, PSD):
+    """
+    Generate noise time series from a given PSD.
+
+    Parameters:
+    T: total observation time
+    fs: sampling frequency
+    N: number of samples
+    Nf: number of frequency bins
+    PSD: given one-sided power spectral density
+    """
+    w_noise = np.random.randn(N)
+    xf_white = np.fft.fft(w_noise)
+    # concatenate one-sdided PSD into tow-sided
+    PSD = np.concatenate((PSD, PSD[-1 - np.mod(N + 1, 2) :: -1]))
+    # generate colored noise
+    xf_noise = xf_white[1:] * np.sqrt(PSD * fs)
+    xf_noise = np.insert(xf_noise, 0, 0)  # insert DC component
+    x = np.real(np.fft.ifft(xf_noise))
+    return x
+
+
+def whiten_data(data, psd, fs):
+    """
+    Whiten data given a psd and sample rate
+
+    Parameters:
+    data: data to be whitened
+    psd: given one-sided power spectral density
+    fs: sample rate
+    """
+    N = len(data)
+    # calculate the fft of data
+    xf = np.fft.fft(data)
+    # concatenate one-sdided PSD into tow-sided
+    psd = np.concatenate((psd, psd[-1 - np.mod(N + 1, 2) :: -1]))
+    # whiten the data
+    xf_white = xf[1:] / np.sqrt(1 / 2 * psd)
+    xf_white = np.insert(xf_white, 0, 0)  # add DC component
+    # recover the time series
+    x = np.real(np.fft.ifft(xf_white))
+    return x
+
+
 if __name__ == "__main__":
+    start_time = time.time()
     main()
     print("--- %s seconds ---" % (time.time() - start_time))
