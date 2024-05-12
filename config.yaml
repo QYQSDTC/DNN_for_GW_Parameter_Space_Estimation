@@ -1,0 +1,12 @@
+T : 0.2 # total time
+fs: 0.05 # samping frequency
+Tc: 0.8 # chirp time, fraction of T
+Phic: 0.954  # chirp phase
+ThetaS: 1.325  # sky location
+PhiS: 2.04  # sky location
+Iota: 1.02 # inclination
+Psi: 0.658 # polarization
+Z: 10 # red shift
+SNR: 300 # signal to noise ratio 
+M1sun: 100000 # M1 in solar mass
+M2sun: 1000000 # M2 in solar mass

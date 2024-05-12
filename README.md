@@ -58,6 +58,14 @@ This script can quickly generate GW waveforms for LISA and TianQin using known n
 
 here are all the parameters you can play with, change the parameters and make your own waveforms.
 
+## LISA_Templates_Generator
+### Dependencies
+AstroPy, SciPy, Pandas, Numpy, PyYaml,Matplolib
+### Config
+Use `config.yaml` to set parameter configration
+### Runtime
+After setting up paramters in `config.yaml`, just use python to run the script `python LISA_Templates_Generator.py`, it will create a folder named `fig` to save the generated figures.
+
 # Reference
 
 ```
