@@ -332,7 +332,7 @@ def SNR(data, T, fs, detector="LISA"):
     计算数据Data的单边功率谱密度:
     T: 数据的时间长度
     fs: 数据的采样频率
-    PSD: 天琴或者 LISA
+    detector: 天琴或者 LISA
     """
     if detector == "TQ":
         PSD = TQPSD
@@ -343,13 +343,14 @@ def SNR(data, T, fs, detector="LISA"):
         return 0
     N = len(data)
     delta_f = 1 / T
-    f = np.arange(0, fs / 2, delta_f)
+    # f = np.arange(0, fs / 2, delta_f)
+    f = np.linspace(0, fs / 2, N // 2 + 1)  # frequency vector
     # print(f'total number of points {N}, length of frequency {len(f)}')
     psd = PSD(f[1:])
     xf = np.fft.fft(data)
-    absf = np.abs(xf)[N // 2 :] / fs  # single-sided spectrum
+    absf = np.abs(xf)[1 : N // 2 + 1] / fs  # single-sided spectrum
     # print(f'length of PSD {len(psd)}\n length of Pxx {len(Pxx)}')
-    SNR = np.sqrt(4 * np.sum(absf[1:] ** 2 / psd[:-1] * delta_f))
+    SNR = np.sqrt(4 * np.sum(absf**2 / psd * delta_f))
     return SNR
 
 

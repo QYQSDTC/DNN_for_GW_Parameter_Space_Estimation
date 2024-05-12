@@ -7,6 +7,6 @@ PhiS: 2.04  # sky location
 Iota: 1.02 # inclination
 Psi: 0.658 # polarization
 Z: 10 # red shift
-SNR: 300 # signal to noise ratio 
+SNR: 50 # signal to noise ratio 
 M1sun: 100000 # M1 in solar mass
 M2sun: 1000000 # M2 in solar mass
