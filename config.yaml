@@ -1,12 +1,12 @@
-T : 0.2 # total time
+T: 0.2 # total time in terms of one year
 fs: 0.05 # samping frequency
-Tc: 0.8 # chirp time, fraction of T
-Phic: 0.954  # chirp phase
-ThetaS: 1.325  # sky location
-PhiS: 2.04  # sky location
-Iota: 1.02 # inclination
-Psi: 0.658 # polarization
+Tc: [0.3, 1] # chirp time, fraction of T
+Phic: [0, 6.283185307179586] # chirp phase uniform [0, 2pi]
+ThetaS: [-1, 1] # sky location arccos uniform [-1,1]
+PhiS: [0, 6.283185307179586] # sky location uniform [0, 2pi]
+Iota: [-1, 1] # inclination arccos uniform [-1,1]
+Psi: [0, 6.283185307179586] # polarization uniform [0,2pi]
 Z: 10 # red shift
-SNR: 50 # signal to noise ratio 
-M1sun: 100000 # M1 in solar mass
-M2sun: 1000000 # M2 in solar mass
+SNR: [20, 50, 100] # signal to noise ratio
+M1sun: [1000000, 10000000] # M1 in solar mass log-uniform [1e5, 1e7]
+M2sun: [1000000, 10000000] # M2 in solar mass log-uniform [1e5, 1e7]
