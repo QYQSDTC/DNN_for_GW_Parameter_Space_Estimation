@@ -8,6 +8,7 @@ OrbitRadiusInS = 1e8 / const.c.value  # 1e5 km
 MearthInS = const.M_earth.value * const.G.value / const.c.value**3
 OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS**3 / MearthInS)
 
+
 def ht_respon_TQ(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
     """
     For TianQin (one Michelson interferometer): (thetaS,phiS) is location of source,

@@ -1,7 +1,12 @@
 .DS_Store
 Data/
 Noise/
-*.csv
-*.code-workspace
-*.png
+.csv
+.code-workspace
+.png
 Fourier.ipynb
+.log
+.h5
+.err
+.out
+.sh
