@@ -1,2 +1,0 @@
-/home/ud202180035/DNN_for_GW_Parameter_Space_Estimation/LISA_TianQin_Waveforms.py:243: RuntimeWarning: divide by zero encountered in divide
-  return (4 * Spos + 16 * Sacc / (2 * np.pi * f) ** 4) / (4 * L**2)
