@@ -5,28 +5,30 @@ Modified from WenFan Feng's code.
 Aknowledge Yao Fu's helpful discussion.
 """
 
-import time
 import os
+import time
+
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
-import matplotlib as mpl
 
 mpl.use("Agg")  # Use the Agg backend for non-interactive plotting
 # set agg chunk size
 mpl.rcParams["agg.path.chunksize"] = 10000
 
-from LISA_TianQin_Waveforms import *
-
-import matplotlib.pyplot as plt
 from functools import partial
-from scipy import signal
-from scipy.fftpack import fft, ifft
-from scipy.stats import loguniform
+
+import h5py
+import matplotlib.pyplot as plt
+import yaml
 from astropy import constants as const
 from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
-import yaml
-import h5py
+from scipy import signal
+from scipy.fftpack import fft, ifft
+from scipy.stats import loguniform
+
+from LISA_TianQin_Waveforms import *
 
 # set up sampling parameters
 # read parameters from config file
