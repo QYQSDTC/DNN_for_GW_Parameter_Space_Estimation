@@ -83,12 +83,10 @@ def main():
 
     # Generate fixed random values for Iota, Psi, and Phic
     # set random seed
-    np.random.seed(666)
+    np.random.seed(42)
     Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
     Psi = np.random.uniform(Psi_min, Psi_max)
     Phic = np.random.uniform(Phic_min, Phic_max)
-    ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
-    PhiS = np.random.uniform(PhiS_min, PhiS_max)
 
     for _ in range(30):  # 30 Tc
         Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
@@ -105,8 +103,11 @@ def main():
             Mu = M1 * M2 / M  # reduced mass
             Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
             Eta = M1 * M2 / M**2  # symmetric mass ratio
-            for snr_ in snr:
-                generate_waveform(
+            for _ in range(100): # 100 (ThetaS, PhiS)
+                ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
+                PhiS = np.random.uniform(PhiS_min, PhiS_max)
+                for snr_ in snr:
+                    generate_waveform(
                     T,
                     t,
                     f,
@@ -124,12 +125,11 @@ def main():
                     snr_,
                     cnt,
                 )
-                with open("sim1.log", "a") as log_file:
+                    with open("sim1.log", "a") as log_file:
                     log_file.write(
                         f"#: {cnt}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Mc: {Mc/MsunInS}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}, SNR: {snr_}\n"
                     )
-                cnt += 1
-
+                    cnt += 1
 
 # generate waveform
 def generate_waveform(

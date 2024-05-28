@@ -150,8 +150,11 @@ def ht_respon_LISA(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
     )
 
     # """1st MI polarization phase for TianQin"""
-    phip_LISA = -np.arctan(
-        2 * np.cos(iota) * Fcros_LISA / ((1 + (np.cos(iota)) ** 2) * Fplus_LISA)
+    # phip_LISA = -np.arctan(
+    #     2 * np.cos(iota) * Fcros_LISA / ((1 + (np.cos(iota)) ** 2) * Fplus_LISA)
+    # ) # arctan function has continuous problem, use arctan2 instead
+    phip_LISA = np.arctan2(
+        2 * np.cos(iota) * Fcros_LISA, (1 + (np.cos(iota)) ** 2) * Fplus_LISA
     )
 
     # """non-precesnp.np.sing spinning PN correction to the GW phase"""
