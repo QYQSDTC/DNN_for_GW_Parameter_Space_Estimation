@@ -7,6 +7,7 @@ Aknowledge Yao Fu's helpful discussion.
 
 import os
 import time
+from multiprocessing import Pool
 
 import matplotlib as mpl
 import numpy as np
@@ -218,6 +219,58 @@ def generate_waveform(
     plt.close()
 
 
+# try to parallelize for ThetaS and PhiS
+def process_waveforms(args):
+    (
+        T,
+        t,
+        f,
+        fs,
+        N,
+        Tc,
+        Phic,
+        M1,
+        M2,
+        Mc,
+        Eta,
+        DL,
+        Iota,
+        Psi,
+        ThetaS_min,
+        ThetaS_max,
+        PhiS_min,
+        PhiS_max,
+        snr,
+        cnt,
+    ) = args
+    ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
+    PhiS = np.random.uniform(PhiS_min, PhiS_max)
+    for snr_ in snr:
+        generate_waveform(
+            T,
+            t,
+            f,
+            fs,
+            N,
+            Tc,
+            Phic,
+            Mc,
+            Eta,
+            DL,
+            ThetaS,
+            PhiS,
+            Iota,
+            Psi,
+            snr_,
+            cnt,
+        )
+        with open("sim1.log", "a") as log_file:
+            log_file.write(
+                f"#: {cnt}, Mc: {Mc/MsunInS}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}, SNR: {snr_}\n"
+            )
+        cnt += 1
+
+
 if __name__ == "__main__":
     start_time = time.time()
 
@@ -253,6 +306,9 @@ if __name__ == "__main__":
     snr = config["SNR"]
     cnt = 0  # cnt for waveform number
 
+    # start parallel pool
+    pool = Pool(processes=4)
+
     # Generate fixed random values for Iota, Psi, and Phic
     # set random seed
     np.random.seed(42)
@@ -275,33 +331,37 @@ if __name__ == "__main__":
             Mu = M1 * M2 / M  # reduced mass
             Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
             Eta = M1 * M2 / M**2  # symmetric mass ratio
-            for _ in range(100):  # 100 (ThetaS, PhiS)
-                ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
-                PhiS = np.random.uniform(PhiS_min, PhiS_max)
-                for snr_ in snr:
-                    generate_waveform(
-                        T,
-                        t,
-                        f,
-                        fs,
-                        N,
-                        Tc,
-                        Phic,
-                        Mc,
-                        Eta,
-                        DL,
-                        ThetaS,
-                        PhiS,
-                        Iota,
-                        Psi,
-                        snr_,
-                        cnt,
-                    )
-                    with open("sim1.log", "a") as log_file:
-                        log_file.write(
-                            f"#: {cnt}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Mc: {Mc/MsunInS}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}, SNR: {snr_}\n"
-                        )
-                    cnt += 1
+
+            # start parallel process_waveforms
+            args = [
+                (
+                    T,
+                    t,
+                    f,
+                    fs,
+                    N,
+                    Tc,
+                    Phic,
+                    M1,
+                    M2,
+                    Mc,
+                    Eta,
+                    DL,
+                    Iota,
+                    Psi,
+                    ThetaS_min,
+                    ThetaS_max,
+                    PhiS_min,
+                    PhiS_max,
+                    snr,
+                    cnt + i,
+                )
+                for i in range(100)
+            ]  # parallelize 100 ThetaS and PhiS
+            pool.map(process_waveforms, args)
+            cnt += 100
+
+    pool.close()
+    pool.join()
 
     print(f"Process Done in {time.time()-start_time:.2f}s")
-
