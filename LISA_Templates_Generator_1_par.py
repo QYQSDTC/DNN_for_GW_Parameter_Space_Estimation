@@ -163,8 +163,8 @@ def generate_waveform(
 
     # Save white_h_t and parameters to HDF5
     with h5py.File("waveforms1.h5", "a") as fn:
-        grp = fn.create_group(f"waveform_{cnt}")
-        grp.create_dataset("white_h_t", data=White_Data_t)
+        grp = fn.create_group(f"waveform_{cnt}_snr{snr:.2f}")
+        grp.create_dataset("white_Data", data=White_Data_t)
         grp.attrs["tc_true"] = tc_true
         grp.attrs["phic_true"] = phic_true
         grp.attrs["mc_true"] = mc_true / MsunInS
@@ -266,9 +266,8 @@ def process_waveforms(args):
         )
         with open("sim1.log", "a") as log_file:
             log_file.write(
-                f"#: {cnt}, Mc: {Mc/MsunInS}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}, SNR: {snr_}\n"
+                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
             )
-        cnt += 1
 
 
 if __name__ == "__main__":
