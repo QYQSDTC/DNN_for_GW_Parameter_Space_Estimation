@@ -11,13 +11,11 @@ from multiprocessing import Pool
 
 import matplotlib as mpl
 import numpy as np
-import pandas as pd
 
 mpl.use("Agg")  # Use the Agg backend for non-interactive plotting
 # set agg chunk size
 mpl.rcParams["agg.path.chunksize"] = 10000
 
-from functools import partial
 
 import h5py
 import matplotlib.pyplot as plt
@@ -162,8 +160,8 @@ def generate_waveform(
     t = t[int(0.01 * N) : int(0.99 * N)]
 
     # Save white_h_t and parameters to HDF5
-    with h5py.File("waveforms1.h5", "a") as fn:
-        grp = fn.create_group(f"waveform_{cnt}_snr{snr:.2f}")
+    with h5py.File(f"waveforms1/waveforms{cnt}_SNR{snr:.2f}.h5", "w") as fn:
+        grp = fn.create_group(f"Data")
         grp.create_dataset("white_Data", data=White_Data_t)
         grp.attrs["tc_true"] = tc_true
         grp.attrs["phic_true"] = phic_true
@@ -213,7 +211,7 @@ def generate_waveform(
     axs[1].legend()
     plt.tight_layout()
     plt.savefig(
-        f"fig1/{cnt}.png",
+        f"fig1/{cnt}_SNR{snr}.png",
         dpi=300,
     )
     plt.close()
@@ -271,6 +269,7 @@ def process_waveforms(args):
 
 
 if __name__ == "__main__":
+    # start timer
     start_time = time.time()
 
     YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
@@ -305,8 +304,8 @@ if __name__ == "__main__":
     snr = config["SNR"]
     cnt = 0  # cnt for waveform number
 
-    # start parallel pool
-    pool = Pool(processes=4)
+    # set up parallel process
+    Pool = Pool(processes=4)
 
     # Generate fixed random values for Iota, Psi, and Phic
     # set random seed
@@ -357,10 +356,12 @@ if __name__ == "__main__":
                 )
                 for i in range(100)
             ]  # parallelize 100 ThetaS and PhiS
-            pool.map(process_waveforms, args)
+
+            Pool.map(process_waveforms, args)
+
             cnt += 100
 
-    pool.close()
-    pool.join()
+    Pool.close()
+    Pool.join()
 
     print(f"Process Done in {time.time()-start_time:.2f}s")
