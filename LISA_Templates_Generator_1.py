@@ -10,13 +10,10 @@ import time
 
 import matplotlib as mpl
 import numpy as np
-import pandas as pd
 
 mpl.use("Agg")  # Use the Agg backend for non-interactive plotting
 # set agg chunk size
 mpl.rcParams["agg.path.chunksize"] = 10000
-
-from functools import partial
 
 import h5py
 import matplotlib.pyplot as plt
@@ -29,11 +26,6 @@ from scipy.fftpack import fft, ifft
 from scipy.stats import loguniform
 
 from LISA_TianQin_Waveforms import *
-
-# set up sampling parameters
-# read parameters from config file
-with open("config.yaml", "r") as f:
-    config = yaml.safe_load(f)
 
 # convert units from SI to Natural units
 MsunInS = (
@@ -221,6 +213,11 @@ def generate_waveform(
 if __name__ == "__main__":
     start_time = time.time()
 
+    # set up sampling parameters
+    # read parameters from config file
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
+
     YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
     fs = config["fs"]  # sampling frequency
     T = int(config["T"] * YearInS)  # Total time
@@ -304,4 +301,3 @@ if __name__ == "__main__":
                     cnt += 1
 
     print(f"Process Done in {time.time()-start_time:.2f}s")
-

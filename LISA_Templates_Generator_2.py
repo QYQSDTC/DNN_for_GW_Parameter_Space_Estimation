@@ -5,30 +5,31 @@ Modified from WenFan Feng's code.
 Aknowledge Yao Fu's helpful discussion.
 """
 
-import time
 import os
-import numpy as np
-import pandas as pd
+import time
+
 import matplotlib as mpl
+import numpy as np
+
 from LISA_TianQin_Waveforms import *
 
 # 设定agg.path.chunksize值，例如设置为10000
+mpl.use("Agg")
 mpl.rcParams["agg.path.chunksize"] = 10000
+import h5py
 import matplotlib.pyplot as plt
-from functools import partial
-from scipy import signal
-from scipy.fftpack import fft, ifft
-from scipy.stats import loguniform
+import yaml
 from astropy import constants as const
 from astropy import units as u
 from astropy.cosmology import FlatLambdaCDM
-import yaml
-import h5py
+from scipy.fftpack import fft, ifft
+from scipy.stats import loguniform
 
 # set up sampling parameters
 # read parameters from config file
-with open("config.yaml", "r") as f:
+with open("config2.yaml", "r") as f:
     config = yaml.safe_load(f)
+
 
 def main():
     YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
@@ -73,38 +74,78 @@ def main():
     cosmo = FlatLambdaCDM(H0=67, Om0=0.32)
     DL = cosmo.luminosity_distance(Z).value * MpcInS  # Mpc in second
     snr = config["SNR"]
-    cnt = 0 # cnt for waveform number
-    for _ in range(10): # 10 Tc
-        Tc = np.random.uniform(Tc_min, Tc_max) * T
-        for _ in range(50): # 50 (M1, M2)
-            M1sun = loguniform.rvs(M1sun_min, M1sun_max)
-            M2sun = loguniform.rvs(M2sun_min, M2sun_max)
-            M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
-            M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
-            M = M1 + M2  # total mass
-            Qmr = M1 / M2  # mass ratio
-            Mu = M1 * M2 / M  # reduced mass
-            Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
-            Eta = M1 * M2 / M**2  # symmetric mass ratio
-            for _ in range(100): # 100 (ThetaS, Phis)
+    cnt = 0  # cnt for waveform number
+
+    # fix rng seed
+    rng = np.random.seed(66)
+
+    for _ in range(50):  # 50 (M1, M2)
+        M1sun = loguniform.rvs(M1sun_min, M1sun_max)
+        M2sun = loguniform.rvs(M2sun_min, M2sun_max)
+        M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
+        M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
+        M = M1 + M2  # total mass
+        Qmr = M1 / M2  # mass ratio
+        Mu = M1 * M2 / M  # reduced mass
+        Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
+        Eta = M1 * M2 / M**2  # symmetric mass ratio
+        for _ in range(10):  # 10 Tc
+            Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
+            for _ in range(36):  # 100 (ThetaS, Phis)
                 ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
-                PhiS   = np.random.uniform(PhiS_min, PhiS_max)
-                for _ in range(10): # 10 Iota
-                    Iota   = np.arccos(np.random.uniform(Iota_min, Iota_max))
-                    for _ in range(10): # 10 Psi
-                        Psi    = np.random.uniform(Psi_min, Psi_max)
-                        for _ in range(10): # 10 Phic
+                PhiS = np.random.uniform(PhiS_min, PhiS_max)
+                for _ in range(1):  # 10 Iota
+                    Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
+                    for _ in range(1):  # 10 Psi
+                        Psi = np.random.uniform(Psi_min, Psi_max)
+                        for _ in range(1):  # 10 Phic
                             Phic = np.random.uniform(Phic_min, Phic_max)
                             for snr_ in snr:
-                                generate_waveform(T, t, f, fs, N, Tc, Phic, Mc, Eta, DL, ThetaS, PhiS, Iota, Psi, snr_, cnt)
+                                generate_waveform(
+                                    T,
+                                    t,
+                                    f,
+                                    fs,
+                                    N,
+                                    Tc,
+                                    Phic,
+                                    Mc,
+                                    Eta,
+                                    DL,
+                                    ThetaS,
+                                    PhiS,
+                                    Iota,
+                                    Psi,
+                                    snr_,
+                                    cnt,
+                                )
                                 cnt += 1
                                 with open("sim2.log", "a") as log_file:
-                                    log_file.write(f"#: {cnt}, Tc: {Tc}, Phic: {Phic}, Mc: {Mc}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}, SNR: {snr_}\n")
+                                    log_file.write(
+                                        f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                                    )
 
 
 # generate waveform
-def generate_waveform(T, t, f, fs, N, tc_true, phic_true, mc_true, eta_true, dl_true, thetas_true, phis_true, iota_true, psi_true, snr, cnt=0):
-    '''
+def generate_waveform(
+    T,
+    t,
+    f,
+    fs,
+    N,
+    tc_true,
+    phic_true,
+    mc_true,
+    eta_true,
+    dl_true,
+    thetas_true,
+    phis_true,
+    iota_true,
+    psi_true,
+    snr,
+    cnt=0,
+):
+    """
     Generate waveform with given parameters
     Args:
         T: total time
@@ -123,7 +164,7 @@ def generate_waveform(T, t, f, fs, N, tc_true, phic_true, mc_true, eta_true, dl_
         psi_true: polarization
         snr: signal-to-noise ratio
         cnt: waveform number
-    '''
+    """
     # calculate PSD and convert it to two-sided PSD
     PSD = LISAPSD(f)
     PSD[0] = 0  # set the DC part to zero
@@ -195,10 +236,20 @@ def generate_waveform(T, t, f, fs, N, tc_true, phic_true, mc_true, eta_true, dl_
     White_Data_t = White_Data_t[int(0.01 * N) : int(0.99 * N)]
     t = t[int(0.01 * N) : int(0.99 * N)]
 
+    # whiten the signal h_t
+    fft_h_t = np.fft.fft(h_t)
+    white_h_t = fft_h_t / np.sqrt(PSD2)
+    # set the first and last element to zero
+    white_h_t[0] = 0
+    # white_h_t[-1] = 0
+    White_h_t = np.real(np.fft.ifft(white_h_t))
+    # drop the first and last 1% of the data
+    White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
+
     # Save white_h_t and parameters to HDF5
     with h5py.File("waveforms2.h5", "a") as fn:
         grp = fn.create_group(f"waveform_{cnt}")
-        grp.create_dataset("white_h_t", data=White_Data_t)
+        grp.create_dataset("white_Data", data=White_Data_t)
         grp.attrs["tc_true"] = tc_true
         grp.attrs["phic_true"] = phic_true
         grp.attrs["mc_true"] = mc_true
@@ -209,15 +260,8 @@ def generate_waveform(T, t, f, fs, N, tc_true, phic_true, mc_true, eta_true, dl_
         grp.attrs["iota_true"] = iota_true
         grp.attrs["psi_true"] = psi_true
         grp.attrs["snr"] = snr
-    # whiten the signal h_t
-    fft_h_t = np.fft.fft(h_t)
-    white_h_t = fft_h_t / np.sqrt(PSD2)
-    # set the first and last element to zero
-    white_h_t[0] = 0
-    # white_h_t[-1] = 0
-    White_h_t = np.real(np.fft.ifft(white_h_t))
-    # drop the first and last 1% of the data
-    White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
+        # create a new dataset to save pure signal h_t
+        grp.create_dataset("pure_signal", data=White_h_t)
 
     # # whiten colored noise
     # fft_Noise = np.fft.fft(noise)
@@ -232,19 +276,26 @@ def generate_waveform(T, t, f, fs, N, tc_true, phic_true, mc_true, eta_true, dl_
     if not os.path.exists("fig2"):
         os.makedirs("fig2")
     # plot the data and the signal
-    fig, ax = plt.subplots(1, 1, figsize=(16, 9), dpi=300)
-    ax.plot(t, White_Data_t, label="Data")
-    ax.plot(t, White_h_t, label="signal")
-    ax.set_title("Whitened Data & Signal, SNR = %.2f" % snr_lisa)
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Amplitude")
-    ax.legend()
+    fig, axs = plt.subplots(2, 1, figsize=(16, 9), dpi=300)
+    axs[0].plot(t, White_Data_t, label="Data")
+    axs[0].plot(t, White_h_t, label="signal")
+    axs[0].set_title("Whitened Data & Signal, SNR = %.2f" % snr_lisa)
+    axs[0].set_xlabel("Time [s]")
+    axs[0].set_ylabel("Amplitude")
+    axs[0].legend()
+    # plot pure signal
+    axs[1].plot(t, White_h_t, label="signal")
+    axs[1].set_title("Pure Signal")
+    axs[1].set_xlabel("Time [s]")
+    axs[1].set_ylabel("Amplitude")
+    axs[1].legend()
     plt.tight_layout()
     plt.savefig(
         f"fig2/{cnt}.png",
         dpi=300,
     )
     plt.close()
+
 
 if __name__ == "__main__":
     start_time = time.time()

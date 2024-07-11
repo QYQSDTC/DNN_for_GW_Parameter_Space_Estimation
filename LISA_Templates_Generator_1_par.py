@@ -160,6 +160,10 @@ def generate_waveform(
     t = t[int(0.01 * N) : int(0.99 * N)]
 
     # Save white_h_t and parameters to HDF5
+    # check if waveforms folder exist
+    if not os.path.exists("waveforms1"):
+        os.makedirs("waveforms1")
+
     with h5py.File(f"waveforms1/waveforms{cnt}_SNR{snr:.2f}.h5", "w") as fn:
         grp = fn.create_group(f"Data")
         grp.create_dataset("white_Data", data=White_Data_t)
@@ -241,6 +245,10 @@ def process_waveforms(args):
         snr,
         cnt,
     ) = args
+
+    # set different rng for different process on Linux ( on Mac it's fine )
+    rng = np.random.seed(cnt)
+
     ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
     PhiS = np.random.uniform(PhiS_min, PhiS_max)
     for snr_ in snr:
@@ -264,7 +272,7 @@ def process_waveforms(args):
         )
         with open("sim1.log", "a") as log_file:
             log_file.write(
-                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, M1: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, M1sun: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
             )
 
 
@@ -314,10 +322,10 @@ if __name__ == "__main__":
     Psi = np.random.uniform(Psi_min, Psi_max)
     Phic = np.random.uniform(Phic_min, Phic_max)
 
-    for _ in range(30):  # 30 Tc
+    for _ in range(1):  # 30 Tc
         Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
         print(f"Tc is {Tc/YearInS}/yr")
-        for _ in range(50):  # 50 (M1, M2)
+        for _ in range(2):  # 50 (M1, M2)
             M1sun = loguniform.rvs(M1sun_min, M1sun_max)
             # print(f"M1sun: {M1sun}")
             M2sun = loguniform.rvs(M2sun_min, M2sun_max)
@@ -354,12 +362,12 @@ if __name__ == "__main__":
                     snr,
                     cnt + i,
                 )
-                for i in range(100)
+                for i in range(4)
             ]  # parallelize 100 ThetaS and PhiS
 
             Pool.map(process_waveforms, args)
 
-            cnt += 100
+            cnt += 4
 
     Pool.close()
     Pool.join()
