@@ -10,6 +10,7 @@ import time
 
 import matplotlib as mpl
 import numpy as np
+from multiprocessing import Pool
 
 from LISA_TianQin_Waveforms import *
 
@@ -25,39 +26,38 @@ from astropy.cosmology import FlatLambdaCDM
 from scipy.fftpack import fft, ifft
 from scipy.stats import loguniform
 
+# read parameters from config file
+with open("config2.yaml", "r") as f:
+    config = yaml.safe_load(f)
+# setup units and constants
+YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
+fs = config["fs"]  # sampling frequency
+T = int(config["T"] * YearInS)  # Total time
+N = int(T * fs)  # Number of data length
+t = np.linspace(0, T, N)  # time vector
+# calculate f
+df = 1 / T  # frequency resolution
+# f = np.arange(0,fs/2,df) # frequency vector
+f = np.linspace(0, fs / 2, N // 2 + 1)  # frequency vector
+print(f"number of f {len(f)}, t {len(t)/2}")
+
+"""
+mutable paramters: Phic, ThetaS, Phis, Iota, Psi, M1, M2, Tc
+"""
+# convert units from SI to Natural units
+MsunInS = (
+    (const.M_sun * const.G / const.c**3).to(u.s).value
+)  # 4.926860879228572e-06   # solar mass in [s] GM/C^3
+MpcInS = (
+    (1 * u.Mpc / const.c).to(u.s).value
+)  # 102927125053532.6       # mega parsec in [s]
+OrbitRadiusInS = 1e8 / const.c.value  # 1e5 km
+MearthInS = const.M_earth.value * const.G.value / const.c.value**3
+OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS**3 / MearthInS)
+AUInS = const.au.value / const.c.value  # AU in [s]
+
 
 def main():
-    YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
-    fs = config["fs"]  # sampling frequency
-    T = int(config["T"] * YearInS)  # Total time
-    N = int(T * fs)  # Number of data length
-    t = np.linspace(0, T, N)  # time vector
-    # calculate f
-    df = 1 / T  # frequency resolution
-    # f = np.arange(0,fs/2,df) # frequency vector
-    f = np.linspace(0, fs / 2, N // 2 + 1)  # frequency vector
-    print(f"number of f {len(f)}, t {len(t)/2}")
-
-    """
-    mutable paramters: Phic, ThetaS, Phis, Iota, Psi, M1, M2, Tc
-    """
-    # convert units from SI to Natural units
-    MsunInS = (
-        (const.M_sun * const.G / const.c**3).to(u.s).value
-    )  # 4.926860879228572e-06   # solar mass in [s] GM/C^3
-    MpcInS = (
-        (1 * u.Mpc / const.c).to(u.s).value
-    )  # 102927125053532.6       # mega parsec in [s]
-    OrbitRadiusInS = 1e8 / const.c.value  # 1e5 km
-    MearthInS = const.M_earth.value * const.G.value / const.c.value**3
-    OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS**3 / MearthInS)
-    AUInS = const.au.value / const.c.value  # AU in [s]
-
-    # set up sampling parameters
-    # read parameters from config file
-    with open("config2.yaml", "r") as f:
-        config = yaml.safe_load(f)
-
     Tc_min, Tc_max = config["Tc"]  # chirp time
     ThetaS_min, ThetaS_max = config["ThetaS"]  # sky location
     PhiS_min, PhiS_max = config["PhiS"]  # sky location
@@ -68,62 +68,133 @@ def main():
     Z = 10  # cosmological redshift
     M1sun_min, M1sun_max = config["M1sun"]  # solar mass as unit
     M2sun_min, M2sun_max = config["M2sun"]  # solar mass as unit
-    # Tobs   = 0.5   # year as unit
-    # Chi1   = 0.1    # dimensionless parameter
-    # Chi2   = 0.0    # dimensionless parameter
     cosmo = FlatLambdaCDM(H0=67, Om0=0.32)
     DL = cosmo.luminosity_distance(Z).value * MpcInS  # Mpc in second
     snr = config["SNR"]
     cnt = 0  # cnt for waveform number
 
-    # fix rng seed
-    rng = np.random.seed(66)
+    # start parallelization for M1 and M2
+    NM = 50  # number of paris of M1,M2
+    pool = Pool(processes=4)
+    args = [
+        (
+            T,
+            t,
+            f,
+            fs,
+            N,
+            Phic_min,
+            Phic_max,
+            DL,
+            Iota_min,
+            Iota_max,
+            Psi_min,
+            Psi_max,
+            Tc_min,
+            Tc_max,
+            M1sun_min,
+            M1sun_max,
+            M2sun_min,
+            M2sun_max,
+            ThetaS_min,
+            ThetaS_max,
+            PhiS_min,
+            PhiS_max,
+            snr,
+            Z,
+            cnt + i * 10000,
+        )
+        for i in range(NM)
+    ]
 
-    for _ in range(50):  # 50 (M1, M2)
-        M1sun = loguniform.rvs(M1sun_min, M1sun_max)
-        M2sun = loguniform.rvs(M2sun_min, M2sun_max)
-        M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
-        M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
-        M = M1 + M2  # total mass
-        Qmr = M1 / M2  # mass ratio
-        Mu = M1 * M2 / M  # reduced mass
-        Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
-        Eta = M1 * M2 / M**2  # symmetric mass ratio
-        for _ in range(10):  # 10 Tc
-            Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
-            for _ in range(36):  # 100 (ThetaS, Phis)
-                ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
-                PhiS = np.random.uniform(PhiS_min, PhiS_max)
-                for _ in range(1):  # 10 Iota
-                    Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
-                    for _ in range(1):  # 10 Psi
-                        Psi = np.random.uniform(Psi_min, Psi_max)
-                        for _ in range(1):  # 10 Phic
-                            Phic = np.random.uniform(Phic_min, Phic_max)
-                            for snr_ in snr:
-                                generate_waveform(
-                                    T,
-                                    t,
-                                    f,
-                                    fs,
-                                    N,
-                                    Tc,
-                                    Phic,
-                                    Mc,
-                                    Eta,
-                                    DL,
-                                    ThetaS,
-                                    PhiS,
-                                    Iota,
-                                    Psi,
-                                    snr_,
-                                    cnt,
+    pool.map(process_M1_M2, args)
+    pool.close()
+    pool.join()
+    print("All subprocesses done.")
+
+
+# process M1 and M2
+def process_M1_M2(args):
+    """
+    Process M1 and M2 for parallelization
+    args: all other required parameters for waveform generation
+    """
+    (
+        T,
+        t,
+        f,
+        fs,
+        N,
+        Phic_min,
+        Phic_max,
+        DL,
+        Iota_min,
+        Iota_max,
+        Psi_min,
+        Psi_max,
+        Tc_min,
+        Tc_max,
+        M1sun_min,
+        M1sun_max,
+        M2sun_min,
+        M2sun_max,
+        ThetaS_min,
+        ThetaS_max,
+        PhiS_min,
+        PhiS_max,
+        snr,
+        Z,
+        cnt,
+    ) = args
+
+    # set different random seeds for different processors
+    np.random.seed(cnt)
+
+    M1sun = loguniform.rvs(M1sun_min, M1sun_max)
+    M2sun = loguniform.rvs(M2sun_min, M2sun_max)
+    M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
+    M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
+    M = M1 + M2  # total mass
+    Qmr = M1 / M2  # mass ratio
+    Mu = M1 * M2 / M  # reduced mass
+    Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
+    Eta = M1 * M2 / M**2  # symmetric mass ratio
+
+    for _ in range(10):  # 10 Tc
+        Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
+        for _ in range(36):  # 100 (ThetaS, Phis)
+            ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
+            PhiS = np.random.uniform(PhiS_min, PhiS_max)
+            for _ in range(1):  # 10 Iota
+                Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
+                for _ in range(1):  # 10 Psi
+                    Psi = np.random.uniform(Psi_min, Psi_max)
+                    for _ in range(1):  # 10 Phic
+                        Phic = np.random.uniform(Phic_min, Phic_max)
+                        for snr_ in snr:
+                            generate_waveform(
+                                T,
+                                t,
+                                f,
+                                fs,
+                                N,
+                                Tc,
+                                Phic,
+                                Mc,
+                                Eta,
+                                DL,
+                                ThetaS,
+                                PhiS,
+                                Iota,
+                                Psi,
+                                snr_,
+                                cnt,
+                            )
+                            cnt += 1
+                            with open("sim2.log", "w") as log_file:
+                                log_file.write(
+                                    f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
                                 )
-                                cnt += 1
-                                with open("sim2.log", "a") as log_file:
-                                    log_file.write(
-                                        f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
-                                    )
 
 
 # generate waveform
@@ -246,9 +317,13 @@ def generate_waveform(
     # drop the first and last 1% of the data
     White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
 
-    # Save white_h_t and parameters to HDF5
-    with h5py.File("waveforms2.h5", "a") as fn:
-        grp = fn.create_group(f"waveform_{cnt}")
+    # mkdir if not exists
+    if not os.path.exists("waveforms2"):
+        os.makedirs("waveforms2")
+
+    # Save white_Data_t and parameters to HDF5
+    with h5py.File(f"waveforms2/waveform{cnt}_SNR{snr:.2f}.h5", "w") as fn:
+        grp = fn.create_group(f"Data")
         grp.create_dataset("white_Data", data=White_Data_t)
         grp.attrs["tc_true"] = tc_true
         grp.attrs["phic_true"] = phic_true
@@ -261,7 +336,7 @@ def generate_waveform(
         grp.attrs["psi_true"] = psi_true
         grp.attrs["snr"] = snr
         # create a new dataset to save pure signal h_t
-        grp.create_dataset("pure_signal", data=White_h_t)
+        grp.create_dataset("white_signal", data=White_h_t)
 
     # # whiten colored noise
     # fft_Noise = np.fft.fft(noise)

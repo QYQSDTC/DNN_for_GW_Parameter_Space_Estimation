@@ -159,14 +159,24 @@ def generate_waveform(
     White_Data_t = White_Data_t[int(0.01 * N) : int(0.99 * N)]
     t = t[int(0.01 * N) : int(0.99 * N)]
 
-    # Save white_h_t and parameters to HDF5
     # check if waveforms folder exist
     if not os.path.exists("waveforms1"):
         os.makedirs("waveforms1")
 
+    # whiten the signal h_t
+    fft_h_t = np.fft.fft(h_t)
+    white_h_t = fft_h_t / np.sqrt(PSD2)
+    # set the first and last element to zero
+    white_h_t[0] = 0
+    # white_h_t[-1] = 0
+    White_h_t = np.real(np.fft.ifft(white_h_t))
+    # drop the first and last 1% of the data
+    White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
+
     with h5py.File(f"waveforms1/waveforms{cnt}_SNR{snr:.2f}.h5", "w") as fn:
         grp = fn.create_group(f"Data")
         grp.create_dataset("white_Data", data=White_Data_t)
+        grp.create_dataset("white_signal", data=White_h_t)
         grp.attrs["tc_true"] = tc_true
         grp.attrs["phic_true"] = phic_true
         grp.attrs["mc_true"] = mc_true / MsunInS
@@ -177,15 +187,6 @@ def generate_waveform(
         grp.attrs["iota_true"] = iota_true
         grp.attrs["psi_true"] = psi_true
         grp.attrs["snr"] = snr
-    # whiten the signal h_t
-    fft_h_t = np.fft.fft(h_t)
-    white_h_t = fft_h_t / np.sqrt(PSD2)
-    # set the first and last element to zero
-    white_h_t[0] = 0
-    # white_h_t[-1] = 0
-    White_h_t = np.real(np.fft.ifft(white_h_t))
-    # drop the first and last 1% of the data
-    White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
 
     # # whiten colored noise
     # fft_Noise = np.fft.fft(noise)
@@ -247,7 +248,7 @@ def process_waveforms(args):
     ) = args
 
     # set different rng for different process on Linux ( on Mac it's fine )
-    rng = np.random.seed(cnt)
+    np.random.seed(cnt)
 
     ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
     PhiS = np.random.uniform(PhiS_min, PhiS_max)
