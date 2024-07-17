@@ -7,10 +7,10 @@ Aknowledge Yao Fu's helpful discussion.
 
 import os
 import time
+from multiprocessing import Pool
 
 import matplotlib as mpl
 import numpy as np
-from multiprocessing import Pool
 
 from LISA_TianQin_Waveforms import *
 
@@ -318,8 +318,15 @@ def generate_waveform(
     White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
 
     # mkdir if not exists
-    if not os.path.exists("waveforms2"):
-        os.makedirs("waveforms2")
+    try:
+        if not os.path.exists("waveforms2"):
+            os.makedirs("waveforms2")
+            print('Directory successfully created.')
+        else:
+            print('Directory already exists.')
+    except Exception as e:
+        print(f"An error occurred: {e}.")
+
 
     # Save white_Data_t and parameters to HDF5
     with h5py.File(f"waveforms2/waveform{cnt}_SNR{snr:.2f}.h5", "w") as fn:
