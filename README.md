@@ -63,6 +63,12 @@ here are all the parameters you can play with, change the parameters and make yo
 AstroPy, SciPy, Pandas, Numpy, PyYaml,Matplolib
 ### Config
 Use `config.yaml` to set parameter configration
+
+#### Config 1
+The first objective of this project is to predict the merger time *Tc*, we set the data length to 3 month and the merger time is between 3 month and 6 month. We will try to predict the *Tc* with the 3 month long data before merging.
+#### Config 2
+The second objective is to estimate the key parameters of the GW which are the chirp mass ($\mathcal{M}_c$) and sky locations $\alpha$ and $\delta$. For this case, we set the data length to 2 weeks and the merging happens in this window.
+
 ### Runtime
 After setting up paramters in `config.yaml`, just use python to run the script `python LISA_Templates_Generator.py`, it will create a folder named `fig` to save the generated figures.
 

@@ -122,7 +122,7 @@ def main():
                                 cnt += 1
                                 with open("sim2.log", "a") as log_file:
                                     log_file.write(
-                                        f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                                        f"#: {cnt}, Tc: {Tc}, Mc: {Mc/MsunInS}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
                                     )
 
 
