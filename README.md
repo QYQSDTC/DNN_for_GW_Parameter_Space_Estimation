@@ -3,9 +3,10 @@
  * @Description: file content
  * @Date: 2023-09-15 11:13:11
  * @LastEditors: Yiqian Qian
- * @LastEditTime: 2023-09-15 11:38:44
+ * @LastEditTime: 2024-11-08 20:15:58
  * @FilePath: /DNN_for_GW_Parameter_Space_Estimation/README.md
 -->
+
 # DNN for GW Hyperarameter Estimation
 
 Using Depp Learning method to estimate GW parameter space by training DNN with a GW template bank.
@@ -40,9 +41,9 @@ This script can quickly generate GW waveforms for LISA and TianQin using known n
 
 - Phic: the chirp phase, in the range of [0, $2\pi$].
 
-- ThetaS: an angle in the range of [0, 2$\pi$].
+- ThetaS: sky location, an angle in the range of [0, 2$\pi$].
 
-- PhiS: an angle in the range of [0, 2$\pi$].
+- PhiS: sky location, an angle in the range of [0, 2$\pi$].
 
 - Iota: an angle in the range of [0, 2$\pi$].
 
@@ -59,17 +60,25 @@ This script can quickly generate GW waveforms for LISA and TianQin using known n
 here are all the parameters you can play with, change the parameters and make your own waveforms.
 
 ## LISA_Templates_Generator
+
 ### Dependencies
+
 AstroPy, SciPy, Pandas, Numpy, PyYaml,Matplolib
+
 ### Config
+
 Use `config.yaml` to set parameter configration
 
 #### Config 1
-The first objective of this project is to predict the merger time *Tc*, we set the data length to 3 month and the merger time is between 3 month and 6 month. We will try to predict the *Tc* with the 3 month long data before merging.
+
+The first objective of this project is to predict the merger time _Tc_, we set the data length to 3 month and the merger time is between 3 month and 6 month. We will try to predict the _Tc_ with the 3 month long data before merging.
+
 #### Config 2
-The second objective is to estimate the key parameters of the GW which are the chirp mass ($\mathcal{M}_c$) and sky locations $\alpha$ and $\delta$. For this case, we set the data length to 2 weeks and the merging happens in this window.
+
+The second objective is to estimate the key parameters of the GW which are the chirp mass ($\mathcal{M}_c$) and sky locations $\theta$ and $\phi$. For this case, we set the data length to 2 weeks and the merging happens in this window.
 
 ### Runtime
+
 After setting up paramters in `config.yaml`, just use python to run the script `python LISA_Templates_Generator.py`, it will create a folder named `fig` to save the generated figures.
 
 # Reference

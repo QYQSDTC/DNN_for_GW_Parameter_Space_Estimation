@@ -191,7 +191,7 @@ def process_M1_M2(args):
                                 cnt,
                             )
                             cnt += 1
-                            with open("sim2.log", "w") as log_file:
+                            with open("sim2.log", "a") as log_file:
                                 log_file.write(
                                     f"#: {cnt}, Tc: {Tc}, Mc: {Mc/MsunInS}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
                                 )

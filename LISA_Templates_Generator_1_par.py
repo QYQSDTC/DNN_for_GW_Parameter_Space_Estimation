@@ -273,7 +273,7 @@ def process_waveforms(args):
         )
         with open("sim1.log", "a") as log_file:
             log_file.write(
-                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, M1sun: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
             )
 
 
@@ -314,7 +314,8 @@ if __name__ == "__main__":
     cnt = 0  # cnt for waveform number
 
     # set up parallel process
-    Pool = Pool(processes=4)
+    Npro = 4
+    Pool = Pool(processes=Npro)
 
     # Generate fixed random values for Iota, Psi, and Phic
     # set random seed
@@ -363,12 +364,12 @@ if __name__ == "__main__":
                     snr,
                     cnt + i,
                 )
-                for i in range(4)
+                for i in range(Npro)
             ]  # parallelize 100 ThetaS and PhiS
 
             Pool.map(process_waveforms, args)
 
-            cnt += 4
+            cnt += Npro
 
     Pool.close()
     Pool.join()
