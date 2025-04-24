@@ -273,7 +273,7 @@ def process_waveforms(args):
         )
         with open("sim1.log", "a") as log_file:
             log_file.write(
-                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                f"#: {cnt}, SNR: {snr_}, Mc: {Mc/MsunInS}, M1sun: {M1/MsunInS}, M2sun: {M2/MsunInS}, Tc: {Tc}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
             )
 
 
@@ -314,8 +314,7 @@ if __name__ == "__main__":
     cnt = 0  # cnt for waveform number
 
     # set up parallel process
-    Npro = 4
-    Pool = Pool(processes=Npro)
+    Pool = Pool(processes=52) # choose according to your device 
 
     # Generate fixed random values for Iota, Psi, and Phic
     # set random seed
@@ -324,10 +323,10 @@ if __name__ == "__main__":
     Psi = np.random.uniform(Psi_min, Psi_max)
     Phic = np.random.uniform(Phic_min, Phic_max)
 
-    for _ in range(1):  # 30 Tc
+    for _ in range(30):  # 30 Tc
         Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
         print(f"Tc is {Tc/YearInS}/yr")
-        for _ in range(2):  # 50 (M1, M2)
+        for _ in range(50):  # 50 (M1, M2)
             M1sun = loguniform.rvs(M1sun_min, M1sun_max)
             # print(f"M1sun: {M1sun}")
             M2sun = loguniform.rvs(M2sun_min, M2sun_max)
@@ -364,12 +363,12 @@ if __name__ == "__main__":
                     snr,
                     cnt + i,
                 )
-                for i in range(Npro)
+                for i in range(100)
             ]  # parallelize 100 ThetaS and PhiS
 
             Pool.map(process_waveforms, args)
 
-            cnt += Npro
+            cnt += 100
 
     Pool.close()
     Pool.join()

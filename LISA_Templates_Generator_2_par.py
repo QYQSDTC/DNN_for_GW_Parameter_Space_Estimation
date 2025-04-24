@@ -193,7 +193,7 @@ def process_M1_M2(args):
                             cnt += 1
                             with open("sim2.log", "a") as log_file:
                                 log_file.write(
-                                    f"#: {cnt}, Tc: {Tc}, Mc: {Mc/MsunInS}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                                    f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
                                 )
 
 
@@ -321,11 +321,12 @@ def generate_waveform(
     try:
         if not os.path.exists("waveforms2"):
             os.makedirs("waveforms2")
-            print("Directory successfully created.")
+            print('Directory successfully created.')
         else:
-            print("Directory already exists.")
+            print('Directory already exists.')
     except Exception as e:
         print(f"An error occurred: {e}.")
+
 
     # Save white_Data_t and parameters to HDF5
     with h5py.File(f"waveforms2/waveform{cnt}_SNR{snr:.2f}.h5", "w") as fn:

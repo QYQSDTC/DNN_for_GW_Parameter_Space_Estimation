@@ -1,4 +1,4 @@
-T: 0.004 # total time in terms of one year
+T: 0.04 # total time in terms of one year
 fs: 0.05 # samping frequency
 Tc: [0.001, 0.0036] # chirp time, fraction of one year
 ThetaS: [-1, 1] # sky location arccos uniform [-1,1]
