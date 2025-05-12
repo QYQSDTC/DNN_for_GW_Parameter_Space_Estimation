@@ -27,6 +27,10 @@ from scipy.stats import loguniform
 
 
 def main():
+    # set up sampling parameters
+    # read parameters from config file
+    with open("config2.yaml", "r") as f:
+        config = yaml.safe_load(f)
     YearInS = (1 * u.yr).to(u.s).value  # one year in [s]
     fs = config["fs"]  # sampling frequency
     T = int(config["T"] * YearInS)  # Total time
@@ -52,11 +56,6 @@ def main():
     MearthInS = const.M_earth.value * const.G.value / const.c.value**3
     OrbitPeriodInS = 2 * np.pi * np.sqrt(OrbitRadiusInS**3 / MearthInS)
     AUInS = const.au.value / const.c.value  # AU in [s]
-
-    # set up sampling parameters
-    # read parameters from config file
-    with open("config2.yaml", "r") as f:
-        config = yaml.safe_load(f)
 
     Tc_min, Tc_max = config["Tc"]  # chirp time
     ThetaS_min, ThetaS_max = config["ThetaS"]  # sky location

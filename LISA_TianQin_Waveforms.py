@@ -196,9 +196,30 @@ def ht_respon_LISA(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
     #     index = next(i for i, x in enumerate(w) if x >= f_iso*np.pi)
     #     ht_LISA[index:-1]=0
     # find the index of the max(w)
-    index = np.argmax(w)
-    ht_LISA[index - 5 :] = 0
+    index = np.argmax(w) - 10
+    ht_LISA[index:] = 0
 
+    tapering = 1
+    epsilon = 0.1
+    if tapering == 1:
+        N = index  # 非零部分长度
+        x = np.linspace(0, 1, N)
+        taper = np.ones(N)
+
+        x1 = 1 / N * 100
+        x2 = 1 - 1 / N * 100
+
+        # 前100
+        idx1 = x < x1
+        taper[idx1] = 1 / (np.exp(x1 / x[idx1] + x1 / (x[idx1] - x1)) + 1)
+
+        # 后100
+        idx2 = x > x2
+        taper[idx2] = 1 / (np.exp(x1 / (1 - x[idx2]) + x1 / (x2 - x[idx2])) + 1)
+
+        # 应用 taper
+        ht_LISA[:index] *= taper
+        ht_LISA[index:] = 0  # 确保后面是0
     return ht_LISA
 
 
@@ -269,7 +290,7 @@ def SNR(data, T, fs, detector="LISA"):
     # print(f'total number of points {N}, length of frequency {len(f)}')
     psd = PSD(f[1:])
     xf = np.fft.fft(data)
-    absf = np.abs(xf)[1 : N // 2 + 1] / fs  # single-sided spectrum
+    absf = np.abs(xf)[0 : N // 2] / fs  # single-sided spectrum
     # print(f'length of PSD {len(psd)}\n length of Pxx {len(Pxx)}')
     SNR = np.sqrt(4 * np.sum(absf**2 / psd * delta_f))
     return SNR
