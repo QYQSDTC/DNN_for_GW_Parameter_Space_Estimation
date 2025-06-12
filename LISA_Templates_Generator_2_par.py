@@ -74,7 +74,7 @@ def main():
     cnt = 0  # cnt for waveform number
 
     # start parallelization for M1 and M2
-    NM = 50  # number of paris of M1,M2
+    NM = 100  # number of paris of M1,M2
     pool = Pool(processes=4)
     args = [
         (
@@ -160,9 +160,9 @@ def process_M1_M2(args):
     Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
     Eta = M1 * M2 / M**2  # symmetric mass ratio
 
-    for _ in range(10):  # 10 Tc
+    for _ in range(100):  # 10 Tc
         Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
-        for _ in range(36):  # 100 (ThetaS, Phis)
+        for _ in range(100):  # 100 (ThetaS, Phis)
             ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
             PhiS = np.random.uniform(PhiS_min, PhiS_max)
             for _ in range(1):  # 10 Iota
