@@ -206,8 +206,8 @@ def ht_respon_LISA(t, tc, phic, mc, eta, dl, thetaS, phiS, iota, psi):
         x = np.linspace(0, 1, N)
         taper = np.ones(N)
 
-        x1 = 1 / N * 100
-        x2 = 1 - 1 / N * 100
+        x1 = 1 / N * 888  # lucky number
+        x2 = 1 - 1 / N * 888
 
         # 前100
         idx1 = x < x1

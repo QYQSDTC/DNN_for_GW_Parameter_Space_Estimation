@@ -1,6 +1,6 @@
 T: 0.04 # total time in terms of one year
 fs: 0.05 # samping frequency
-Tc: [0.001, 0.0036] # chirp time, fraction of one year
+Tc: [0.002, 0.036] # chirp time, fraction of one year
 ThetaS: [-1, 1] # sky location arccos uniform [-1,1]
 PhiS: [0, 6.283185307179586] # sky location uniform [0, 2pi]
 Phic: [0, 6.283185307179586] # chirp phase uniform [0, 2pi]
@@ -10,3 +10,5 @@ Z: 10 # red shift
 SNR: [50, 100, 200] # signal to noise ratio
 M1sun: [1000000, 10000000] # M1 in solar mass log-uniform [1e6, 1e7]
 M2sun: [1000000, 10000000] # M2 in solar mass log-uniform [1e6, 1e7]
+n_waveforms: 8 # number of waveforms to generate
+n_processes: 4 # number of processes to use

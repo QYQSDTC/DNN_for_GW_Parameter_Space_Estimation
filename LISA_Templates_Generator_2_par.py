@@ -71,11 +71,11 @@ def main():
     cosmo = FlatLambdaCDM(H0=67, Om0=0.32)
     DL = cosmo.luminosity_distance(Z).value * MpcInS  # Mpc in second
     snr = config["SNR"]
-    cnt = 0  # cnt for waveform number
+    n_processes = config.get("n_processes", 4)
+    n_waveforms = config["n_waveforms"]
+    n_per_process = n_waveforms // n_processes
 
-    # start parallelization for M1 and M2
-    NM = 100  # number of paris of M1,M2
-    pool = Pool(processes=4)
+    pool = Pool(processes=n_processes)
     args = [
         (
             T,
@@ -102,9 +102,10 @@ def main():
             PhiS_max,
             snr,
             Z,
-            cnt + i * 10000,
+            i * n_per_process,  # cnt offset for file naming & random seed
+            n_per_process,
         )
-        for i in range(NM)
+        for i in range(n_processes)
     ]
 
     pool.map(process_M1_M2, args)
@@ -145,56 +146,57 @@ def process_M1_M2(args):
         snr,
         Z,
         cnt,
+        n_waveforms_per_process,
     ) = args
 
     # set different random seeds for different processors
     np.random.seed(cnt)
 
-    M1sun = loguniform.rvs(M1sun_min, M1sun_max)
-    M2sun = loguniform.rvs(M2sun_min, M2sun_max)
-    M1 = (1 + Z) * M1sun * MsunInS  # solar mass in second
-    M2 = (1 + Z) * M2sun * MsunInS  # solar mass in second
-    M = M1 + M2  # total mass
-    Qmr = M1 / M2  # mass ratio
-    Mu = M1 * M2 / M  # reduced mass
-    Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)  # chirp mass
-    Eta = M1 * M2 / M**2  # symmetric mass ratio
+    os.makedirs("waveforms2", exist_ok=True)
+    os.makedirs("fig2", exist_ok=True)
 
-    for _ in range(100):  # 10 Tc
+    for _ in range(n_waveforms_per_process):
+        # Sample all parameters independently each iteration
+        M1sun = loguniform.rvs(M1sun_min, M1sun_max)
+        M2sun = loguniform.rvs(M2sun_min, M2sun_max)
+        M1 = (1 + Z) * M1sun * MsunInS
+        M2 = (1 + Z) * M2sun * MsunInS
+        M = M1 + M2
+        Mu = M1 * M2 / M
+        Mc = Mu ** (3.0 / 5) * M ** (2.0 / 5)
+        Eta = M1 * M2 / M**2
+
         Tc = np.random.uniform(Tc_min, Tc_max) * YearInS
-        for _ in range(100):  # 100 (ThetaS, Phis)
-            ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
-            PhiS = np.random.uniform(PhiS_min, PhiS_max)
-            for _ in range(1):  # 10 Iota
-                Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
-                for _ in range(1):  # 10 Psi
-                    Psi = np.random.uniform(Psi_min, Psi_max)
-                    for _ in range(1):  # 10 Phic
-                        Phic = np.random.uniform(Phic_min, Phic_max)
-                        for snr_ in snr:
-                            generate_waveform(
-                                T,
-                                t,
-                                f,
-                                fs,
-                                N,
-                                Tc,
-                                Phic,
-                                Mc,
-                                Eta,
-                                DL,
-                                ThetaS,
-                                PhiS,
-                                Iota,
-                                Psi,
-                                snr_,
-                                cnt,
-                            )
-                            cnt += 1
-                            with open("sim2.log", "a") as log_file:
-                                log_file.write(
-                                    f"#: {cnt}, Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
-                                )
+        ThetaS = np.arccos(np.random.uniform(ThetaS_min, ThetaS_max))
+        PhiS = np.random.uniform(PhiS_min, PhiS_max)
+        Iota = np.arccos(np.random.uniform(Iota_min, Iota_max))
+        Psi = np.random.uniform(Psi_min, Psi_max)
+        Phic = np.random.uniform(Phic_min, Phic_max)
+
+        for snr_ in snr:
+            generate_waveform(
+                T,
+                t,
+                f,
+                fs,
+                N,
+                Tc,
+                Phic,
+                Mc,
+                Eta,
+                DL,
+                ThetaS,
+                PhiS,
+                Iota,
+                Psi,
+                snr_,
+                cnt,
+            )
+            with open("sim2.log", "a") as log_file:
+                log_file.write(
+                    f"waveform{cnt}_SNR{snr_:.2f}: Tc: {Tc}, Mc: {Mc}, SNR: {snr_}, Phic: {Phic}, Eta: {Eta}, DL: {DL}, ThetaS: {ThetaS}, PhiS: {PhiS}, Iota: {Iota}, Psi: {Psi}\n"
+                )
+        cnt += 1
 
 
 # generate waveform
@@ -317,17 +319,6 @@ def generate_waveform(
     # drop the first and last 1% of the data
     White_h_t = White_h_t[int(0.01 * N) : int(0.99 * N)]
 
-    # mkdir if not exists
-    try:
-        if not os.path.exists("waveforms2"):
-            os.makedirs("waveforms2")
-            print('Directory successfully created.')
-        else:
-            print('Directory already exists.')
-    except Exception as e:
-        print(f"An error occurred: {e}.")
-
-
     # Save white_Data_t and parameters to HDF5
     with h5py.File(f"waveforms2/waveform{cnt}_SNR{snr:.2f}.h5", "w") as fn:
         grp = fn.create_group(f"Data")
@@ -353,11 +344,7 @@ def generate_waveform(
     # # white_Noise[-1] = 0
     # White_Noise_t = np.real(np.fft.ifft(white_Noise))
 
-    # Plot
-    # check if folder fig exists
-    if not os.path.exists("fig2"):
-        os.makedirs("fig2")
-    # plot the data and the signal
+    # Plot the data and the signal
     fig, axs = plt.subplots(2, 1, figsize=(16, 9), dpi=300)
     axs[0].plot(t, White_Data_t, label="Data")
     axs[0].plot(t, White_h_t, label="signal")
@@ -373,7 +360,7 @@ def generate_waveform(
     axs[1].legend()
     plt.tight_layout()
     plt.savefig(
-        f"fig2/{cnt}.png",
+        f"fig2/{cnt}_SNR{snr:.2f}.png",
         dpi=300,
     )
     plt.close()
